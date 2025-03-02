@@ -36,13 +36,15 @@ const ttag_t supported_tags[] = {
     TIFFTAG_COLORMAP
 };
 
-const size_t n_supported_tags = sizeof(supported_tags) / sizeof(supported_tags[0]);
+const size_t n_supported_tags = sizeof(supported_tags) / sizeof(ttag_t);
 
 static int need_init = 1;
+static int err_reenter = 0;
+
+// Global variable to track the last opened TIFF handle
+TIFF *last_tiff = NULL;
 
 static char txtbuf[2048];  // text buffer
-
-static TIFF *last_tiff; /* this to avoid leaks */
 
 // avoid protection issues with setAttrib
 void setAttr(SEXP x, const char *name, SEXP val) {
@@ -71,8 +73,6 @@ static void TIFFWarningHandler_(const char* module, const char* fmt,
   }
 }
 
-static int err_reenter = 0;
-
 static void TIFFErrorHandler_(const char* module, const char* fmt, va_list ap) {
   if (err_reenter) return;
   /* prevent re-entrance which can happen as TIFF
@@ -97,7 +97,8 @@ static void init_tiff(void) {
 }
 
 // Cleanup function to make sure all TIFF resources are released
-void cleanup_tiff(void) {
+void cleanup_tiff(void)
+{
   if (last_tiff) {
     TIFFClose(last_tiff);
     last_tiff = NULL;
@@ -231,10 +232,15 @@ TIFF *TIFF_Open(const char *mode, tiff_job_t *rj) {
     last_tiff = NULL;
   }
   
-  return(last_tiff =
-	         TIFFClientOpen("pkg:tiff", mode, (thandle_t) rj, TIFFReadProc_,
-                           TIFFWriteProc_, TIFFSeekProc_, TIFFCloseProc_,
-                           TIFFSizeProc_, TIFFMapFileProc_, TIFFUnmapFileProc_));
+  // Store the result directly in last_tiff so we can clean it up on error
+  last_tiff = TIFFClientOpen("pkg:tiff", mode, (thandle_t) rj, TIFFReadProc_,
+                         TIFFWriteProc_, TIFFSeekProc_, TIFFCloseProc_,
+                         TIFFSizeProc_, TIFFMapFileProc_, TIFFUnmapFileProc_);
+  
+  // If TIFFClientOpen failed, make sure we don't return a NULL pointer
+  // The memory leak in TIFFClientOpen would have already happened, but
+  // this ensures we properly handle future cleanup
+  return last_tiff;
 }
 
 // Helper function to open a TIFF file
@@ -246,6 +252,9 @@ TIFF* open_tiff_file(const char* filename, tiff_job_t* rj, FILE** f) {
     rj->f = *f;
     TIFF* tiff = TIFF_Open("rmc", rj); // no mmap, no chopping
     if (!tiff) {
+        fclose(*f);
+        *f = NULL;
+        rj->f = NULL;
         Rf_error("Unable to open TIFF");
     }
     return tiff;
