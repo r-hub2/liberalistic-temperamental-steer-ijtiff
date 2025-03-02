@@ -61,7 +61,6 @@ SEXP getAttr(SEXP x, const char *name) {
 static void TIFFWarningHandler_(const char* module, const char* fmt,
                                 va_list ap) {
   /* we can't pass it directly since R has no vprintf entry point */
-  // FIXME: could possible put an if statement here to suppress tag warnings
   vsnprintf(txtbuf, sizeof(txtbuf), fmt, ap);
   if (strstr(txtbuf,
              "Unknown field with tag") == NULL &&
@@ -184,10 +183,11 @@ static int TIFFCloseProc_(thandle_t usr) {
   tiff_job_t *rj = (tiff_job_t*) usr;
   if (rj->f) {
     fclose(rj->f);
+    rj->f = NULL;
   } else if (rj->alloc) {
-  	free(rj->data);
-	  rj->data = 0;
-  	rj->alloc = 0;
+    free(rj->data);
+    rj->data = NULL;
+    rj->alloc = 0;
   }
   last_tiff = 0;
   return 0;
