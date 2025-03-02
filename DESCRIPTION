@@ -42,7 +42,7 @@ RoxygenNote: 7.3.2
 SystemRequirements: fftw3, libtiff, libbz2, libdeflate, libjpeg,
         liblzma, libwebp, libzstd, X11, zlib
 NeedsCompilation: yes
-Packaged: 2025-03-02 17:35:34 UTC; rnolan
+Packaged: 2025-03-02 18:07:49 UTC; rnolan
 Author: Rory Nolan [aut, cre] (<https://orcid.org/0000-0002-5239-4043>),
   Kent Johnson [aut],
   Simon Urbanek [ctb],
