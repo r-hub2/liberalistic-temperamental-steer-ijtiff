@@ -63,24 +63,27 @@ read_tif <- function(path, frames = "all", list_safety = "error", msg = TRUE) {
     message("Reading image from ", path)
   }
   # First read tags from frame 1 to get initial metadata
-  tags1 <- .Call("read_tags_C", path, 1L, PACKAGE = "ijtiff")[[1]]
+  tags1 <- translate_tiff_tags(
+    .Call("read_tags_C", path, 1L, PACKAGE = "ijtiff")[[1]]
+  )
   # Now prepare the read operation with the initial tags
   img_prep <- prep_read(path, frames, tags1, tags = FALSE)
   tags <- .Call("read_tags_C", path, img_prep$frames,
                 PACKAGE = "ijtiff")[img_prep$back_map]
+  tags <- purrr::map(tags, translate_tiff_tags)
   # Read the image data
   out <- .Call("read_tif_C", path, img_prep$frames,
     PACKAGE = "ijtiff"
   )[img_prep$back_map]
+  for (i in seq_along(out)) {
+    for (tag_name in names(tags[[i]])) {
+      attr(out[[i]], tag_name) <- tags[[i]][[tag_name]]
+    }
+  }
   ds <- dims(out)
   if (dplyr::n_distinct(ds) == 1) {
     d <- ds[[1]]
     if (colormap_or_ij_channels(out, img_prep, d)) {
-      for (i in seq_along(out)) {
-        for (tag_name in names(tags[[i]])) {
-          attr(out[[i]], tag_name) <- tags[[i]][[tag_name]]
-        }
-      }
       out <- purrr::map(out, compute_desired_plane)
     }
     out <- unlist(out)
