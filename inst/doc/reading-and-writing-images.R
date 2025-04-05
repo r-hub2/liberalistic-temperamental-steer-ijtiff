@@ -13,7 +13,7 @@ path_dancing_banana <- system.file("img", "Rlogo-banana.tif",
 print(path_dancing_banana)
 
 ## ----read-dancing-banana------------------------------------------------------
-pacman::p_load(ijtiff, magrittr)
+library(ijtiff)
 img_dancing_banana <- read_tif(path_dancing_banana)
 
 ## ----peek---------------------------------------------------------------------
@@ -21,11 +21,11 @@ print(img_dancing_banana)
 
 ## ----red-blue-green-banana, echo=FALSE, message=FALSE, out.width='100%', dpi=300----
 d <- dim(img_dancing_banana)
-reds <- purrr::map(seq_len(d[4]), ~ img_dancing_banana[, , 1, .]) %>%
+reds <- purrr::map(seq_len(d[4]), ~ img_dancing_banana[, , 1, .]) |>
   purrr::reduce(cbind)
-greens <- purrr::map(seq_len(d[4]), ~ img_dancing_banana[, , 2, .]) %>%
+greens <- purrr::map(seq_len(d[4]), ~ img_dancing_banana[, , 2, .]) |>
   purrr::reduce(cbind)
-blues <- purrr::map(seq_len(d[4]), ~ img_dancing_banana[, , 3, .]) %>%
+blues <- purrr::map(seq_len(d[4]), ~ img_dancing_banana[, , 3, .]) |>
   purrr::reduce(cbind)
 to_display <- array(0, dim = c(3 * nrow(reds), ncol(reds), 3, 1))
 to_display[seq_len(nrow(reds)), , 1, ] <- reds
@@ -38,11 +38,11 @@ img_dancing_banana357 <- read_tif(path_dancing_banana, frames = c(3, 5, 7))
 
 ## ----red-bblue-green-banana357, echo=FALSE, message=FALSE, out.width='100%', dpi=300----
 d <- dim(img_dancing_banana357)
-reds <- purrr::map(seq_len(d[4]), ~ img_dancing_banana357[, , 1, .]) %>%
+reds <- purrr::map(seq_len(d[4]), ~ img_dancing_banana357[, , 1, .]) |>
   purrr::reduce(cbind)
-greens <- purrr::map(seq_len(d[4]), ~ img_dancing_banana357[, , 2, .]) %>%
+greens <- purrr::map(seq_len(d[4]), ~ img_dancing_banana357[, , 2, .]) |>
   purrr::reduce(cbind)
-blues <- purrr::map(seq_len(d[4]), ~ img_dancing_banana357[, , 3, .]) %>%
+blues <- purrr::map(seq_len(d[4]), ~ img_dancing_banana357[, , 3, .]) |>
   purrr::reduce(cbind)
 to_display <- array(0, dim = c(3 * nrow(reds), ncol(reds), 3, 1))
 to_display[seq_len(nrow(reds)), , 1, ] <- reds
